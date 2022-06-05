@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/abdillahzakkie/silkroad/database"
+	"github.com/abdillahzakkie/silkroad/helpers"
 )
 
 type Category struct {
@@ -18,4 +22,34 @@ func init() {
 	// migrate database
 	database.DB.AutoMigrate(&Category{})
 }
+
+// POST "/categories/new"
+// CreateNewCategory creates new category
+func (c *Category) CreateNewCategory(w http.ResponseWriter, r *http.Request) {
+	category := Category {
+		CategoryId: 0,
+	}
+
+	err := helpers.ParseForm(r, &category); if err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
+		return
+	}
+
+	if category.Name == "" {
+		helpers.RespondWithError(w, http.StatusBadRequest, "name is required")
+		return
+	}
+
+	result := database.DB.Create(&category) 
+
+	if result.Error != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, result.Error.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(category)
+}
+
 
