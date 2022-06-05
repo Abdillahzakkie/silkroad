@@ -53,7 +53,15 @@ func (c *Category) CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (c *Category) GetCategory(w http.ResponseWriter, r *http.Request) (*Category, error) {
-	var category Category
-	return &category, nil
+func (c *Category) GetAllCategories(w http.ResponseWriter, r *http.Request) {
+	var categories []Category
+
+	result := database.DB.Find(&categories); if result.Error != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, result.Error.Error())
+		return 
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(categories)
 }
