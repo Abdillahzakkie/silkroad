@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/abdillahzakkie/silkroad/database"
 	"github.com/abdillahzakkie/silkroad/helpers"
+	"github.com/gorilla/mux"
 )
 
 type Category struct {
@@ -64,4 +66,21 @@ func (c *Category) GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(categories)
+}
+
+func (c *Category) GetCategoryById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	categoryId, err  := strconv.Atoi(vars["category_id"]); if err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, "invalid category id received")
+		return
+	}
+
+	var category Category
+	result := database.DB.First(&category, categoryId); if result.Error != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, result.Error.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(category)
 }
