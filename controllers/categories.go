@@ -53,3 +53,7 @@ func (c *Category) CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 
+func (c *Category) GetCategory(w http.ResponseWriter, r *http.Request) (*Category, error) {
+	var category Category
+	return &category, nil
+}
