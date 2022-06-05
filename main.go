@@ -41,8 +41,12 @@ func main() {
 	router.HandleFunc("/categories/new", category.CreateNewCategory).Methods(http.MethodPost)
 
 	// GET "/categories/"
-	// Creates new product
+	// Get all categories
 	router.HandleFunc("/categories", category.GetAllCategories).Methods(http.MethodGet)
+
+	// GET "/categories/{category_id}"
+	// Get category by ID
+	router.HandleFunc("/categories/{category_id}", category.GetCategoryById).Methods(http.MethodGet)
 
 	log.Println("Server listening on port: ", port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf("localhost:%s", port), router))
