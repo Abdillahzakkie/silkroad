@@ -36,9 +36,13 @@ func main() {
 	// Creates new product
 	router.HandleFunc("/products/{seller_id}/new", product.CreateNewProduct).Methods(http.MethodPost)
 
-	// POST "/products/{seller_id}/new"
-	// Creates new product
+	// POST "/categories/new"
+	// Creates new categories
 	router.HandleFunc("/categories/new", category.CreateNewCategory).Methods(http.MethodPost)
+
+	// GET "/categories/"
+	// Creates new product
+	router.HandleFunc("/categories", category.GetAllCategories).Methods(http.MethodGet)
 
 	log.Println("Server listening on port: ", port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf("localhost:%s", port), router))
