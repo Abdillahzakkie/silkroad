@@ -5,11 +5,15 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/abdillahzakkie/silkroad/controllers"
 	"github.com/abdillahzakkie/silkroad/database"
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	var product controllers.Product
+	var category controllers.Category
+
 	port := "8080"
 	router := mux.NewRouter()
 	sqlDB, err := database.DB.DB(); if err != nil {
@@ -26,6 +30,15 @@ func main() {
 
 	// GET "*" handles all unknown routes
 	router.NotFoundHandler = http.HandlerFunc(notFoundRoute)
+
+	
+	// POST "/products/{seller_id}/new"
+	// Creates new product
+	router.HandleFunc("/products/{seller_id}/new", product.CreateNewProduct).Methods(http.MethodPost)
+
+	// POST "/products/{seller_id}/new"
+	// Creates new product
+	router.HandleFunc("/categories/new", category.CreateNewCategory).Methods(http.MethodPost)
 
 	log.Println("Server listening on port: ", port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf("localhost:%s", port), router))
