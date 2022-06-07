@@ -56,3 +56,7 @@ func (u *User) DeleteUser() error {
 	return nil
 }
 
+func (u User) IsExisted() bool {
+	database.DB.Where("id = ? OR username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u)
+	return u.ID != 0
+}
