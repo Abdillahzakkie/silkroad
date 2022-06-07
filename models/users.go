@@ -48,3 +48,11 @@ func (u *User) GetUserById() error {
 	return nil
 }
 
+func (u *User) DeleteUser() error {
+	result := database.DB.Delete(&u, u.ID)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
