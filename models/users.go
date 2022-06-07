@@ -28,3 +28,13 @@ func (u *User) CreateNewUser() error {
 	}
 	return nil
 }
+
+
+func (u User) GetAllUsers() ([]User, error) {
+	var users []User
+	result := database.DB.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
