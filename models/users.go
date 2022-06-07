@@ -38,3 +38,13 @@ func (u User) GetAllUsers() ([]User, error) {
 	}
 	return users, nil
 }
+
+
+func (u *User) GetUserById() error {
+	result := database.DB.Where("id = ?", u.ID).First(&u)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
