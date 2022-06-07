@@ -48,6 +48,14 @@ func (u *User) GetUserById() error {
 	return nil
 }
 
+func (u *User) GetUser() error {
+	result := database.DB.Where("username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 func (u *User) DeleteUser() error {
 	result := database.DB.Delete(&u, u.ID)
 	if result.Error != nil {
