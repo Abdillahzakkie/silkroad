@@ -14,7 +14,7 @@ type User struct {
 	Password string `gorm:"<-;not null" json:"password" schema:"password,required"`
 }
 
-func (u *User) CreateNewUser() error {
+func (u *User) CreateNewUser() (err error) {
 	// hash user's password
 	password, err := helpers.HashPassword(u.Password)
 	if err != nil {
@@ -22,44 +22,41 @@ func (u *User) CreateNewUser() error {
 	}
 	u.Password = string(password)
 
-	result := database.DB.Create(&u)
-	if result.Error != nil {
-		return result.Error
+	err = database.DB.Create(&u).Error; if err != nil {
+		return err
 	}
+
 	return nil
 }
 
 
-func (u User) GetAllUsers() ([]User, error) {
-	var users []User
-	result := database.DB.Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
+func (u User) GetAllUsers() (users []User, err error) {
+	err = database.DB.Find(&users).Error; if err != nil {
+		return nil, err
 	}
 	return users, nil
 }
 
 
-func (u *User) GetUserById() error {
-	result := database.DB.Where("id = ?", u.ID).First(&u)
-	if result.Error != nil {
-		return result.Error
+func (u *User) GetUserById() (err error) {
+	err = database.DB.Where("id = ?", u.ID).First(&u).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (u *User) GetUser() error {
-	result := database.DB.Where("username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u)
-	if result.Error != nil {
-		return result.Error
+func (u *User) GetUser() (err error) {
+	err = database.DB.Where("username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (u *User) DeleteUser() error {
-	result := database.DB.Delete(&u, u.ID)
-	if result.Error != nil {
-		return result.Error
+func (u *User) DeleteUser() (err error) {
+	err = database.DB.Delete(&u, u.ID).Error; if err != nil {
+		return err
 	}
 	return nil
 }
