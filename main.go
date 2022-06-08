@@ -48,6 +48,11 @@ func main() {
 	// DELETE "/users/:id"
 	// Delete user by ID
 	router.HandleFunc("/users/{id}", controllers.DeleteUser).Methods(http.MethodDelete)
+
+	// POST "/categories/new"
+	// Create new category
+	router.HandleFunc("/categories/new", controllers.CreateNewCategory).Methods(http.MethodPost)
+
 	startServer(router)
 }
 
