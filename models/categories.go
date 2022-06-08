@@ -27,7 +27,7 @@ func (c Category) GetAllCategories() (categories []Category, err error) {
 }
 
 func (c *Category) GetCategoryById() (err error) {
-	err = database.DB.First(&c, c.CategoryID).Error; if err != nil {
+	err = database.DB.Where(c).First(&c).Error; if err != nil {
 		return err
 	}
 	return nil
