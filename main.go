@@ -53,6 +53,10 @@ func main() {
 	// Create new category
 	router.HandleFunc("/categories/new", controllers.CreateNewCategory).Methods(http.MethodPost)
 
+	// GET "/categories"
+	// Get all categories
+	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodPost)
+
 	startServer(router)
 }
 
