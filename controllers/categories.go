@@ -34,3 +34,17 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(category)
 }
 
+func GetAllCategories(w http.ResponseWriter, r *http.Request) {
+	var category models.Category
+	var categories []models.Category
+
+	categories, err := category.GetAllCategories(); if err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(categories)
+}
+
