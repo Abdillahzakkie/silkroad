@@ -37,14 +37,6 @@ func (u User) GetAllUsers() (users []User, err error) {
 	return users, nil
 }
 
-
-func (u *User) GetUserById() (err error) {
-	err = database.DB.Where(u).First(&u).Error; if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (u *User) GetUser() (err error) {
 	err = database.DB.Where(u).First(&u).Error; if err != nil {
 		return err
