@@ -45,7 +45,9 @@ func main() {
 	// Get user by ID
 	router.HandleFunc("/users", controllers.GetUserById).Queries("id", "{id}").Methods(http.MethodGet)
 
-	
+	// DELETE "/users/:id"
+	// Delete user by ID
+	router.HandleFunc("/users/{id}", controllers.DeleteUser).Methods(http.MethodDelete)
 	startServer(router)
 }
 
