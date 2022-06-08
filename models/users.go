@@ -39,29 +39,27 @@ func (u User) GetAllUsers() (users []User, err error) {
 
 
 func (u *User) GetUserById() (err error) {
-	err = database.DB.Where("id = ?", u.ID).First(&u).Error
-	if err != nil {
+	err = database.DB.Where(u).First(&u).Error; if err != nil {
 		return err
 	}
 	return nil
 }
 
 func (u *User) GetUser() (err error) {
-	err = database.DB.Where("username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u).Error
-	if err != nil {
+	err = database.DB.Where(u).First(&u).Error; if err != nil {
 		return err
 	}
 	return nil
 }
 
 func (u *User) DeleteUser() (err error) {
-	err = database.DB.Delete(&u, u.ID).Error; if err != nil {
+	err = database.DB.Where(u).Delete(&u).Error; if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u User) IsExisted() bool {
+func (u *User) IsExisted() bool {
 	database.DB.Where("id = ? OR username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u)
 	return u.ID != 0
 }
