@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/abdillahzakkie/silkroad/helpers"
 	"github.com/abdillahzakkie/silkroad/models"
+	"github.com/gorilla/mux"
 )
 
 // POST "/categories/new"
@@ -48,3 +50,22 @@ func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(categories)
 }
 
+func GetCategoryById(w http.ResponseWriter, r *http.Request) {
+	var category models.Category
+	var err error
+	
+	vars := mux.Vars(r)
+	category.CategoryID, err  = strconv.Atoi(vars["category_id"]); if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, "invalid category id received")
+		return
+	}
+
+	err = category.GetCategoryById(); if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, fmt.Sprintf("%v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(category)
+}
