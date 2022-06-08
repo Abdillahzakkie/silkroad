@@ -57,6 +57,10 @@ func main() {
 	// Get all categories
 	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodPost)
 
+	// GET "/categories/:category_id"
+	// Get category by Category ID
+	router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodPost)
+
 	startServer(router)
 }
 
