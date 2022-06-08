@@ -37,6 +37,10 @@ func main() {
 	// Creates new user
 	router.HandleFunc("/users/signup", controllers.CreateNewUser).Methods(http.MethodPost)
 
+	// GET "/users"
+	// Get all users
+	router.HandleFunc("/users/all", controllers.GetAllUsers).Methods(http.MethodGet)
+
 	
 	startServer(router)
 }
