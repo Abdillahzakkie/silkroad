@@ -41,6 +41,10 @@ func main() {
 	// Get all users
 	router.HandleFunc("/users/all", controllers.GetAllUsers).Methods(http.MethodGet)
 
+	// GET "/users/:id"
+	// Get user by ID
+	router.HandleFunc("/users", controllers.GetUserById).Queries("id", "{id}").Methods(http.MethodGet)
+
 	
 	startServer(router)
 }
