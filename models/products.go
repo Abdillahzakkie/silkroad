@@ -25,3 +25,10 @@ func (p *Product) GetAllProducts() (products []Product, err error) {
 	}
 	return products, nil
 }
+
+func (p Product) GetProduct() (product Product, err error) {
+	err = database.DB.Where(p).First(&product).Error; if err != nil {
+		return product, err
+	}
+	return product, nil
+}
