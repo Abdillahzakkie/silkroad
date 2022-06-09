@@ -19,3 +19,9 @@ func (p *Product) CreateNewProduct() error {
 	return database.DB.Create(&p).Error
 }
 
+func (p *Product) GetAllProducts() (products []Product, err error) {
+	err = database.DB.Find(&products).Error; if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
