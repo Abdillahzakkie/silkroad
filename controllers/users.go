@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// POST "/users/new"
+// CreateNewUser creates new user
 func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	// parse url-encoded form data
@@ -30,6 +32,8 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// GET "/users/all"
+// GetAllUsers queries and returns all users
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	users, err := user.GetAllUsers(); if err != nil {
@@ -41,6 +45,8 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
+// GET "/users?id=<id>"
+// GetUserById gets user by ID
 func GetUserById(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	var err error
@@ -61,12 +67,14 @@ func GetUserById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// DELETE "/users/:id"
+// DeleteUser deletes user by ID
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	var err error
 	vars := mux.Vars(r)
 
-	user.ID, err = strconv.Atoi(vars["id"]); if err != nil {
+	user.ID, err = strconv.Atoi(vars["user_id"]); if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, "invalid user id")
 		return
 	}
