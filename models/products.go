@@ -36,3 +36,10 @@ func (p Product) GetProduct() (product Product, err error) {
 func (p *Product) GetProductById() error {
 	return database.DB.Where("product_id = ?", p.ProductID).First(&p).Error
 }
+
+func (p *Product) GetProductsBySellerId() (products []Product, err error) {
+	err = database.DB.Where("seller_id = ?", p.SellerID).Find(&products).Error; if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
