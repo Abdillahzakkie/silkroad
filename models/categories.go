@@ -12,11 +12,8 @@ type Category struct {
 
 // POST "/categories/new"
 // CreateNewCategory creates new category
-func (c *Category) CreateNewCategory() (err error) {
-	err = database.DB.Create(&c).Error; if err != nil {
-		return err
-	}
-	return nil
+func (c *Category) CreateNewCategory() error {
+	return database.DB.Create(&c).Error
 }
 
 func (c Category) GetAllCategories() (categories []Category, err error) {
@@ -26,9 +23,10 @@ func (c Category) GetAllCategories() (categories []Category, err error) {
 	return categories, nil
 }
 
-func (c *Category) GetCategoryById() (err error) {
-	err = database.DB.Where(c).First(&c).Error; if err != nil {
-		return err
-	}
-	return nil
+func (c *Category) GetCategoryById() error {
+	return database.DB.Where(c).First(&c).Error
+}
+
+func (c *Category) GetCategoryByName() error {
+	return database.DB.Where("name = ?", c.Name).First(&c).Error
 }
