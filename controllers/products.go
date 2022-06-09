@@ -60,6 +60,23 @@ func CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
+
+// GET "/products"
+// GetAllProducts get all products
+func GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	var product models.Product
+
+	products, err := product.GetAllProducts(); if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, fmt.Sprintf("%v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(products)
+}
+
+
 // GET "/products/{product_id}"
 // GetProductById get product by Product ID
 func GetProductById(w http.ResponseWriter, r *http.Request) {
@@ -81,3 +98,4 @@ func GetProductById(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
+

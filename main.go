@@ -65,6 +65,10 @@ func main() {
 	// Create new category
 	router.HandleFunc("/products/new", controllers.CreateNewProduct).Methods(http.MethodPost)
 
+	// GET "/products"
+	// Get all products
+	router.HandleFunc("/products", controllers.GetAllProducts).Methods(http.MethodGet)
+
 	// GET "/products/:product_id"
 	// Create new category
 	router.HandleFunc("/products/{product_id}", controllers.GetProductById).Methods(http.MethodGet)
