@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/abdillahzakkie/silkroad/helpers"
 	"github.com/abdillahzakkie/silkroad/models"
+	"github.com/gorilla/mux"
 )
 
 // POST "/products/{seller_id}/new"
@@ -55,5 +57,27 @@ func CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+}
+
+// GET "/products/{product_id}"
+// GetProductById get product by Product ID
+func GetProductById(w http.ResponseWriter, r *http.Request) {
+	var product models.Product
+	var err error
+	vars := mux.Vars(r)
+	
+	product.ProductID, err = strconv.Atoi(vars["product_id"]); if err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, "invalid product ID")
+		return
+	}
+
+	err = product.GetProductById(); if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, "product does not exist")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
