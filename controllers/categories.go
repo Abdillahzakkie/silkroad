@@ -25,6 +25,11 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 		helpers.RespondWithError(w, http.StatusBadRequest, "name is required")
 		return
 	}
+
+	category.GetCategoryByName(); if category.CategoryID != 0 {
+		helpers.RespondWithError(w, http.StatusNotFound, "category has already existed")
+		return
+	}
 	// insert record into DB
 	err = category.CreateNewCategory(); if err != nil {
 		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
@@ -36,6 +41,8 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(category)
 }
 
+// GET "/categories/new"
+// GetAllCategories queries and returns all categories
 func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	var category models.Category
 	var categories []models.Category
@@ -50,6 +57,8 @@ func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(categories)
 }
 
+// GET "/categories/new"
+// GetCategoryById gets category by ID
 func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 	var category models.Category
 	var err error
@@ -61,7 +70,7 @@ func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = category.GetCategoryById(); if err != nil {
-		helpers.RespondWithError(w, http.StatusNotFound, fmt.Sprintf("%v", err))
+		helpers.RespondWithError(w, http.StatusNotFound, "category does not exist")
 		return
 	}
 
