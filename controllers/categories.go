@@ -41,7 +41,7 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(category)
 }
 
-// GET "/categories/new"
+// GET "/categories"
 // GetAllCategories queries and returns all categories
 func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	var category models.Category
@@ -57,7 +57,7 @@ func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(categories)
 }
 
-// GET "/categories/new"
+// GET "/categories/:id"
 // GetCategoryById gets category by ID
 func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 	var category models.Category
