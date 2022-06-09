@@ -14,19 +14,14 @@ type User struct {
 	Password string `gorm:"<-;not null" json:"password" schema:"password,required"`
 }
 
-func (u *User) CreateNewUser() (err error) {
+func (u *User) CreateNewUser() error {
 	// hash user's password
 	password, err := helpers.HashPassword(u.Password)
 	if err != nil {
 		return err
 	}
 	u.Password = string(password)
-
-	err = database.DB.Create(&u).Error; if err != nil {
-		return err
-	}
-
-	return nil
+	return  database.DB.Create(&u).Error
 }
 
 
@@ -37,21 +32,10 @@ func (u User) GetAllUsers() (users []User, err error) {
 	return users, nil
 }
 
-func (u *User) GetUser() (err error) {
-	err = database.DB.Where(u).First(&u).Error; if err != nil {
-		return err
-	}
-	return nil
+func (u *User) GetUser() error {
+	return database.DB.Where(u).First(&u).Error;
 }
 
-func (u *User) DeleteUser() (err error) {
-	err = database.DB.Where(u).Delete(&u).Error; if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *User) IsExisted() bool {
-	database.DB.Where("id = ? OR username = ? OR wallet = ?", u.ID, u.Username, u.Wallet).First(&u)
-	return u.ID != 0
+func (u *User) DeleteUser() error {
+	return database.DB.Where(u).Delete(&u).Error;
 }
