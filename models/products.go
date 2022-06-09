@@ -32,3 +32,7 @@ func (p Product) GetProduct() (product Product, err error) {
 	}
 	return product, nil
 }
+
+func (p *Product) GetProductById() error {
+	return database.DB.Where("product_id = ?", p.ProductID).First(&p).Error
+}
