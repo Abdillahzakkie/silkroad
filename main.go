@@ -45,9 +45,9 @@ func main() {
 	// Get user by ID
 	router.HandleFunc("/users", controllers.GetUserById).Queries("id", "{id}").Methods(http.MethodGet)
 
-	// DELETE "/users/:id"
+	// DELETE "/users/:user_id"
 	// Delete user by ID
-	router.HandleFunc("/users/{id}", controllers.DeleteUser).Methods(http.MethodDelete)
+	router.HandleFunc("/users/{user_id}", controllers.DeleteUser).Methods(http.MethodDelete)
 
 	// POST "/categories/new"
 	// Create new category
@@ -55,11 +55,11 @@ func main() {
 
 	// GET "/categories"
 	// Get all categories
-	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodPost)
+	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodGet)
 
 	// GET "/categories/:category_id"
 	// Get category by Category ID
-	router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodPost)
+	router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodGet)
 
 	startServer(router)
 }
