@@ -67,7 +67,7 @@ func main() {
 
 	// GET "/products"
 	// Get all products
-	router.HandleFunc("/products", controllers.GetAllProducts).Methods(http.MethodGet)
+	router.HandleFunc("/products/all", controllers.GetAllProducts).Methods(http.MethodGet)
 
 	// GET "/products/:product_id"
 	// Create new category
