@@ -26,8 +26,8 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(map[string]string{
-		"error": message,
 		"code": fmt.Sprintf("%d", code),
+		"error": message,
 	})
 	
 	if err != nil {
