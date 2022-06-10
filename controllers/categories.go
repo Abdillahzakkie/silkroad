@@ -26,7 +26,7 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category.GetCategoryByName(); if category.CategoryID != 0 {
+	category.GetCategoryByName(); if category.ID != 0 {
 		helpers.RespondWithError(w, http.StatusNotFound, "category has already existed")
 		return
 	}
@@ -64,7 +64,7 @@ func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 	var err error
 	
 	vars := mux.Vars(r)
-	category.CategoryID, err  = strconv.Atoi(vars["category_id"]); if err != nil {
+	category.ID, err  = strconv.Atoi(vars["category_id"]); if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, "invalid category id received")
 		return
 	}
