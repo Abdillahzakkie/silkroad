@@ -23,11 +23,11 @@ func CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user  := models.User{
-		ID: product.SellerID,
+		ID: product.UserID,
 	}
 
 	category := models.Category{
-		CategoryID: product.CategoryID,
+		ID: product.CategoryID,
 	}
 
 	// lookup seller by Id
@@ -44,7 +44,7 @@ func CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 
 	// checks if product has already existed
 	// discard error if product does not exist
-	_isExistingProduct, _ := product.GetProduct(); if _isExistingProduct.ProductID != 0 {
+	_isExistingProduct, _ := product.GetProduct(); if _isExistingProduct.ID != 0 {
 		helpers.RespondWithError(w, http.StatusBadRequest, "product already exists")
 		return
 	}
@@ -82,7 +82,7 @@ func GetProductById(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
 	
-	product.ProductID, err = strconv.Atoi(vars["product_id"]); if err != nil {
+	product.ID, err = strconv.Atoi(vars["product_id"]); if err != nil {
 		helpers.RespondWithError(w, http.StatusBadRequest, "invalid product ID")
 		return
 	}
@@ -105,7 +105,7 @@ func GetProductsBySellerId(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
 	
-	product.SellerID, err = strconv.Atoi(vars["seller_id"]); if err != nil {
+	product.UserID, err = strconv.Atoi(vars["seller_id"]); if err != nil {
 		helpers.RespondWithError(w, http.StatusBadRequest, "invalid seller ID")
 		return
 	}
