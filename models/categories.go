@@ -6,8 +6,8 @@ import (
 
 type Category struct {
 	Model
-	CategoryID int   `gorm:"primaryKey" json:"category_id" schema:"category_id"`
-	Name       string `gorm:"<-;not null;uniqueIndex" json:"name" schema:"name"`
+	ID int   `gorm:"primaryKey,column:category_id" json:"category_id" schema:"category_id"`
+	Name       string `gorm:"not null;uniqueIndex" json:"name" schema:"name"`
 }
 
 // POST "/categories/new"
