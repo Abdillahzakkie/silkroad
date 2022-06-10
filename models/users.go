@@ -8,10 +8,11 @@ import (
 type User struct {
 	Model
 	ID       int    `gorm:"primaryKey" json:"id" schema:"-"`
-	Wallet   string `gorm:"<-;not null;uniqueIndex" json:"wallet" schema:"wallet,required"`
-	Username string `gorm:"<-;not null;uniqueIndex" json:"username" schema:"username,required"`
-	Email    string `gorm:"<-;not null;uniqueIndex" json:"-" schema:"email,required"`
-	Password string `gorm:"<-;not null" json:"password" schema:"password,required"`
+	Wallet   string `gorm:"not null;uniqueIndex" json:"wallet" schema:"wallet,required"`
+	Username string `gorm:"not null;uniqueIndex" json:"username" schema:"username,required"`
+	Email    string `gorm:"not null;uniqueIndex" json:"-" schema:"email,required"`
+	Password string `gorm:"not null" json:"password" schema:"password,required"`
+	Product []Product `gorm:"foreignkey:user_id" json:"products" schema:"-"`
 }
 
 func (u *User) CreateNewUser() error {
@@ -33,8 +34,21 @@ func (u User) GetAllUsers() (users []User, err error) {
 }
 
 func (u *User) GetUser() error {
-	return database.DB.Where(u).First(&u).Error;
+	return database.DB.Where(u).Preload("Product").First(&u).Error;
 }
+
+// func (u *User) GetUser() (err error) {
+// 	err = database.DB.Where(u).First(&u).Error; if err != nil {
+// 		switch err {
+// 			case gorm.ErrRecordNotFound:
+// 				err = errors.New("user does not exist")
+// 				return
+// 			default:
+// 				fmt.Println("Query panicked out", err)
+// 		}
+// 	}
+// 	return err
+// }
 
 func (u *User) DeleteUser() error {
 	return database.DB.Where(u).Delete(&u).Error;
