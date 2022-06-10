@@ -6,13 +6,13 @@ import (
 
 type Product struct {
 	Model
-	ProductID 		int 		`gorm:"primaryKey" json:"id" schema:"-"`
-	SellerID		int			`gorm:"embedded" json:"seller_id" schema:"seller_id,required"`	
-	ProductName 	string  	`gorm:"<-;not null" json:"name" schema:"name,required"`
-	Description 	string  	`gorm:"<-;not null" json:"description" schema:"description,required"`
-	CategoryID      int     	`gorm:"embedded" json:"-" schema:"category_id,required"`
-	Price       	float64 	`gorm:"<-;not null" json:"price" schema:"price,required"`
-	Quantity    	int     	`gorm:"<-;not null" json:"quantity" schema:"quantity,required"`
+	ID 				int 		`gorm:"primaryKey;column:product_id" json:"id" schema:"-"`
+	UserID		int			`json:"user_id" schema:"seller_id,required"`	
+	CategoryID      int     	`json:"category_id" schema:"category_id,required"`
+	ProductName 	string  	`gorm:"not null" json:"product_name" schema:"name,required"`
+	Description 	string  	`gorm:"not null" json:"description" schema:"description,required"`
+	Price       	float64 	`gorm:"not null" json:"price" schema:"price,required"`
+	Quantity    	int     	`gorm:"not null" json:"quantity" schema:"quantity,required"`
 }
 
 func (p *Product) CreateNewProduct() error {
@@ -34,11 +34,11 @@ func (p Product) GetProduct() (product Product, err error) {
 }
 
 func (p *Product) GetProductById() error {
-	return database.DB.Where("product_id = ?", p.ProductID).First(&p).Error
+	return database.DB.Where("product_id = ?", p.ID).First(&p).Error
 }
 
 func (p *Product) GetProductsBySellerId() (products []Product, err error) {
-	err = database.DB.Where("seller_id = ?", p.SellerID).Find(&products).Error; if err != nil {
+	err = database.DB.Where("user_id = ?", p.UserID).Find(&products).Error; if err != nil {
 		return nil, err
 	}
 	return products, nil
