@@ -24,7 +24,7 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save user to database
-	response, err := userService.CreateNewUser(&user)
+	user, err = userService.CreateNewUser(user)
 	switch err {
 		case nil:
 			break
@@ -38,7 +38,7 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(user)
 }
 
 // GET "/users/all"
@@ -99,18 +99,16 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		ID: uint(id),
 	}
 
-	status, err := userService.IsExistingUser(user)
+	err = userService.IsExistingUser(user)
 	switch err {
 		case nil:
 			break
+		case models.ErrorUserNotFound:
+			helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(err))
+			return
 		default:
 			helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
 			return
-	}
-
-	if !status {
-		helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(models.ErrorUserNotFound))
-		return
 	}
 
 	err = userService.DeleteUser(user.ID); if err != nil {

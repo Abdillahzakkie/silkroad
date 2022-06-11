@@ -23,7 +23,7 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// insert record into DB
-	response, err := categoryService.CreateNewCategory(category)
+	category, err = categoryService.CreateNewCategory(category)
 	switch err {
 		case nil:
 			break
@@ -37,7 +37,7 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(category)
 }
 
 // GET "/categories"
@@ -66,7 +66,19 @@ func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := categoryService.IsExistingCategory(uint(id))
+	// err = categoryService.IsExistingCategory(uint(id))
+	// switch err {
+	// 	case nil:
+	// 		break
+	// 	case models.ErrorCategoryNotFound:
+	// 		helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(err))
+	// 		return
+	// 	default:
+	// 		helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
+	// 		return
+	// }
+
+	category, err := categoryService.GetCategoryById(uint(id))
 	switch err {
 		case nil:
 			break
@@ -76,16 +88,6 @@ func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 		default:
 			helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
 			return
-	}
-
-	if !status {
-		helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(models.ErrorCategoryNotFound))
-		return
-	}
-
-	category, err := categoryService.GetCategoryById(uint(id)); if err != nil {
-		helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
