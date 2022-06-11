@@ -45,21 +45,21 @@ func (us *UserService) Close() error {
 	return nil
 }
 
-func (us *UserService) CreateNewUser(user *User) (User, error) {
+func (us *UserService) CreateNewUser(user User) (User, error) {
 	var err error
 	// hash user's password
 	user.Password, err = helpers.HashPassword(user.Password)
 	switch err {
 		case bcrypt.ErrHashTooShort:
-			return *user, ErrorPasswordTooShort
+			return user, ErrorPasswordTooShort
 	}
 
 	err = database.DB.Create(&user).Error;
 	switch err.(type) {
 		case *pgconn.PgError:
-			return *user, ErrorUserAlreadyExists
+			return user, ErrorUserAlreadyExists
 	}
-	return *user, nil
+	return user, err
 }
 
 func (us UserService) GetAllUsers() ([]User, error) {
@@ -87,18 +87,6 @@ func (us *UserService) GetUserById(id uint) (User, error) {
 	return user, err
 }
 
-func (us *UserService) GetUser() (user User, err error) {
-	// err = database.DB.Where(us.User).Preload("Product").First(&user).Error;
-
-	// switch err.(type) {
-	// 	case *pgconn.PgError:
-	// 		return user, ErrorNotFound
-	// 	default:
-	// 		return user, ErrorInternalServerError
-	// }
-	return user, nil
-}
-
 func (us *UserService) DeleteUser(id uint) error {
 	user := User{
 		ID: id,
@@ -109,17 +97,15 @@ func (us *UserService) DeleteUser(id uint) error {
 		case *pgconn.PgError:
 			return ErrorNotFound
 	}
-	return nil
+	return err
 }
 
-func (us UserService) IsExistingUser(user User) (bool, error) {
+func (us UserService) IsExistingUser(user User) error {
 	err := database.DB.Where(user).First(&user).Error; if err != nil {
 		switch err {
 			case gorm.ErrRecordNotFound:
-				return false, nil
-			default:
-				return false, err
+				return ErrorUserNotFound
 		}
 	}
-	return true, nil
+	return err
 }
