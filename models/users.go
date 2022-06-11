@@ -5,8 +5,8 @@ import (
 
 	"github.com/abdillahzakkie/silkroad/database"
 	"github.com/abdillahzakkie/silkroad/helpers"
-	"github.com/abdillahzakkie/silkroad/vendor/github.com/jackc/pgconn"
-	"github.com/abdillahzakkie/silkroad/vendor/golang.org/x/crypto/bcrypt"
+	"github.com/jackc/pgconn"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
