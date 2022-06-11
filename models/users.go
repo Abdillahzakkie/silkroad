@@ -13,7 +13,6 @@ import (
 var (
 	ErrorUserNotFound = errors.New("user not found")
 	ErrorUserAlreadyExists = errors.New("user already exists")
-
 )
 
 type User struct {
@@ -62,7 +61,7 @@ func (us *UserService) CreateNewUser(user *User) (err error) {
 	return nil
 }
 
-func (us *UserService) GetAllUsers() ([]User, error) {
+func (us UserService) GetAllUsers() ([]User, error) {
 	var users []User
 	err := database.DB.Find(&users).Error; if err != nil {
 		return nil, err
@@ -84,7 +83,7 @@ func (us *UserService) GetUserById(id uint) (User, error) {
 			return user, ErrorUserNotFound
 	}
 
-	return user, nil
+	return user, err
 }
 
 func (us *UserService) GetUser() (user User, err error) {
