@@ -45,20 +45,21 @@ func (us *UserService) Close() error {
 	return nil
 }
 
-func (us *UserService) CreateNewUser(user *User) (err error) {
+func (us *UserService) CreateNewUser(user *User) (User, error) {
+	var err error
 	// hash user's password
 	user.Password, err = helpers.HashPassword(user.Password)
 	switch err {
 		case bcrypt.ErrHashTooShort:
-			return ErrorPasswordTooShort
+			return *user, ErrorPasswordTooShort
 	}
 
 	err = database.DB.Create(&user).Error;
 	switch err.(type) {
 		case *pgconn.PgError:
-			return ErrorUserAlreadyExists
+			return *user, ErrorUserAlreadyExists
 	}
-	return nil
+	return *user, nil
 }
 
 func (us UserService) GetAllUsers() ([]User, error) {
