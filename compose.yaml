@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  backend:
+    container_name: "silkroad"
+    build:
+      context: .
+    depends_on:
+      - "postgres"
+    ports:
+      - "8080:8080"
+    restart: "always"
+
+  database:
+    container_name: "postgres"
+    image: postgres:14.3
+    restart: "always"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: silkroad
+    volumes:
+      - dbdata:/var/lib/postgressql/data
+volumes:
+  dbdata:
