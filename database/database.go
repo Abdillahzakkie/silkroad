@@ -20,7 +20,14 @@ var DB *gorm.DB
 
 func init() {
 	var err error
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai", host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai", 
+		host, 
+		port, 
+		user, 
+		password, 
+		dbname,
+	)
 
 	DB, err = gorm.Open(postgres.New(postgres.Config{
 		DSN: psqlInfo,

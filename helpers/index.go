@@ -31,7 +31,11 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 	})
 	
 	if err != nil {
-		http.Error(w, fmt.Sprintf("%s", err), code)
+		http.Error(w, ErrorString(err), code)
 		return
 	}
+}
+
+func ErrorString(err error) string {
+	return fmt.Sprintf("%v", err)
 }
