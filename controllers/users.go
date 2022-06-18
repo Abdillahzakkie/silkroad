@@ -91,10 +91,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// authenticate user 
 	user, err := us.Authenticate(form.Email, form.Password); if err != nil {
 		switch err {
-			case models.ErrNotFound:
+			case models.ErrInvalidCredentials:
 				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				return
 			default:
 				helpers.RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
+				return
 		}
 	}
 
