@@ -11,6 +11,15 @@ func errorResponse(values ...interface{}) string {
 	return fmt.Sprintf("Expected %s, got %s", values[0], values[1])
 }
 
+func getUser() *User {
+	return &User{
+		Username: "silkroad",
+		Wallet: "0x0000000000000000000000000000000000000000",
+		Email: "example@example.com",
+		Password: "test",
+	}
+}
+
 func testingUserService() (*UserService, error) {
 	psqlInfo, err := GetPsqlInfo("silkroad_test"); if err != nil {
 		return nil, err
@@ -40,15 +49,10 @@ func TestHashPassword(t *testing.T) {
 	// close database connection
 	defer us.Close()
 	// create new user
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@example.com",
-		Password: "test",
-	}
+	user := getUser()
 	password := user.Password
 
-	if err := us.HashPassword(&user); err != nil {
+	if err := us.HashPassword(user); err != nil {
 		t.Error(err)
 	}
 	// assert user.Password is cleared
@@ -68,15 +72,10 @@ func TestVerifyHashedPassword(t *testing.T) {
 	// close database connection
 	defer us.Close()
 	// create new user
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@example.com",
-		Password: "test",
-	}
+	user := getUser()
 	password := user.Password
 
-	if err := us.HashPassword(&user); err != nil {
+	if err := us.HashPassword(user); err != nil {
 		t.Error(err)
 	}
 
@@ -94,13 +93,8 @@ func TestCreateUser(t *testing.T) {
 	defer us.Close()
 
 	// create new user
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@example.com",
-		Password: "test",
-	}
-	if err := createNewUser(us, &user); err != nil {
+	user := getUser()
+	if err := createNewUser(us, user); err != nil {
 		t.Error(err)
 	}
 	// assert that user.ID is 1
@@ -125,12 +119,7 @@ func TestGetAllUsers(t *testing.T) {
 	defer us.Close()
 	
 	// create new user
-	if err := createNewUser(us, &User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@test.com",
-		Password: "test",
-	}); err != nil {
+	if err := createNewUser(us, getUser()); err != nil {
 		t.Errorf(err.Error())
 	}
 
