@@ -2,19 +2,31 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/abdillahzakkie/silkroad/database"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var (
-	ErrorNotFound = errors.New("models: resource not found")
-	ErrorAlreadyExists = errors.New("models: resource already exists")
-	ErrorInternalServerError = errors.New("models: internal server error")
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "test"
+	dbname   = "silkroad"
+)
 
+var (
+	ErrNotFound = errors.New("models: resource not found")
+	ErrAlreadyExists = errors.New("models: resource already exists")
+	ErrBadRequest = errors.New("models: invalid credentials provided")
+	ErrInternalServerError = errors.New("models: internal server error")
+	ErrDatabaseConnectionFailed = errors.New("database connection failed")
+	
 	// BCRYPT ERRORS
-	ErrorPasswordTooShort = errors.New("models: password is too short")
+	ErrPasswordTooShort = errors.New("models: password is too short")
+	ErrInvalidCredentials = errors.New("models: invalid credentials provided")
 )
 
 type Model struct {
@@ -23,33 +35,48 @@ type Model struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func init() {
-	// migrate database
-	database.DB.AutoMigrate(
-		&User{}, 
-		&Product{},
-		&Category{},
-	)
-
-	// err := destructiveReset(); if err != nil {
-	// 	log.Fatal(err)
-	// }
+type User struct {
+	Model
+	ID       			uint    	`gorm:"primaryKey" json:"id"`
+	Wallet   			string 		`gorm:"not null;uniqueIndex" json:"wallet"`
+	Username 			string 		`gorm:"not null;uniqueIndex" json:"username"`
+	Email    			string 		`gorm:"not null;uniqueIndex" json:"-"`
+	Password 			string 		`gorm:"-:all" json:"-"`
+	PasswordHash 		string 		`gorm:"not null;column:password" json:"-"`
+	Product 			[]Product 	`gorm:"foreignkey:user_id" json:"products"`
 }
 
-// clear existing "users" table and auto migrate the table
-// to create new "users" table
-func destructiveReset() error {
-	database.DB.Migrator().DropTable("users", "products", "categories")
+type Category struct {
+	Model
+	ID 			uint   		`gorm:"primaryKey" json:"category_id"`
+	Name       	string 		`gorm:"not null;uniqueIndex" json:"name"`
+}
 
-	// create new tables and index
-	err := database.DB.AutoMigrate(
-		&User{},
-		&Product{},
-		&Category{},
-	)
-	
+// ConnectDatabase connects to the database
+func ConnectDatabase(psqlInfo string) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: psqlInfo,
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage. By default pgx automatically uses the extended protocol
+	}), &gorm.Config{})
+
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return db, nil
+}
+
+// GetPsqlInfo returns a string containing the PostgreSQL connection information
+func GetPsqlInfo(dbname string) (string, error) {
+	if dbname == "" {
+		return "", errors.New("models: dbname is empty")
+	}
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai", 
+		host, 
+		port, 
+		user, 
+		password, 
+		dbname,
+	)
+	return psqlInfo, nil
 }
