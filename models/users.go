@@ -87,7 +87,7 @@ func (us *UserService) VerifyHashedPassword(password, passwordHash string) error
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), passwordByte); err != nil {
 		switch err {
 			case bcrypt.ErrMismatchedHashAndPassword:
-				return err
+				return ErrInvalidCredentials
 			default:
 				return err
 		}
