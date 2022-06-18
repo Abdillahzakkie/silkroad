@@ -106,7 +106,7 @@ func (us *UserService) Authenticate(email, password string) (User, error) {
 	if err := us.GetUser(&user); err != nil {
 		switch err {
 			case ErrNotFound:
-				return User{}, ErrNotFound
+				return User{}, ErrInvalidCredentials
 			default:
 				return User{}, err
 		}
