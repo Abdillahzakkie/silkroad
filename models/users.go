@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const passwordPepper = "silkroad:/:password:/:pepper"
+const passwordPepper = "test-pepper"
 
 
 type UserService struct {
