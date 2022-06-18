@@ -16,7 +16,9 @@ type UserService struct {
 	db *gorm.DB
 }
 
-// create new UserService
+// NewUserService - creates a new user service
+// returns a pointer to the newly created UserService instance as it's first value
+// and an error if one occurred as it's second value
 func NewUserService(psqlInfo string) (*UserService, error) {
 	db, err := ConnectDatabase(psqlInfo); if err != nil {
 		return nil, err
@@ -32,7 +34,8 @@ func NewUserService(psqlInfo string) (*UserService, error) {
 	return &us, nil
 }
 
-// Close method close the database connection
+// Close - closes the database connection
+// returns error if unable to close connection
 func (us *UserService) Close() error {
 	sql, err := us.db.DB(); if err != nil {
 		return err
@@ -41,7 +44,8 @@ func (us *UserService) Close() error {
 	return nil
 }
 
-// AutoMigrate will try and automatically migrate table
+// AutoMigrate - auto migrates the users table
+// returns error if unable to create table
 func (us *UserService) AutoMigrate() error {
 	if err := us.db.AutoMigrate(&User{}); err != nil {
 		return errors.New("error while creating new 'users' table")
@@ -49,8 +53,8 @@ func (us *UserService) AutoMigrate() error {
 	return nil
 }
 
-// clear existing "users" table and auto migrate the table
-// to create new "users" table
+// DestructiveReset - drops the users table and creates a new one
+// returns error if unable to drop table or re-create it
 func (us *UserService) DestructiveReset() error {
 	if err := us.db.Migrator().DropTable("users"); err != nil {
 		return errors.New("unable to delete 'users' records")
@@ -62,7 +66,8 @@ func (us *UserService) DestructiveReset() error {
 	return nil
 }
 
-// HashPassword hashes the provided password passed in
+// HashPassword - Hashes the provided password
+// returns error if unable to hash password
 func (us *UserService) HashPassword(user *User) error {
 	passwordByte := []byte(user.Password + passwordPepper)
 	passwordHash, err := bcrypt.GenerateFromPassword(passwordByte, bcrypt.DefaultCost)
@@ -74,6 +79,8 @@ func (us *UserService) HashPassword(user *User) error {
 	return nil
 }
 
+// VerifyHashedPassword - verifies the provided password against the hashed password
+// returns error if unable to verify password
 func (us *UserService) VerifyHashedPassword(password, passwordHash string) error {
 	passwordByte := []byte(password + passwordPepper)
 	password = ""
@@ -88,6 +95,8 @@ func (us *UserService) VerifyHashedPassword(password, passwordHash string) error
 	return nil
 }
 
+// Authenticate - authenticates the user and returns the user object
+// returns error if unable to authenticate user
 func (us *UserService) Authenticate(email, password string) (User, error) {
 	user := User {
 		Email: email,
@@ -111,6 +120,8 @@ func (us *UserService) Authenticate(email, password string) (User, error) {
 	return user, nil
 }
 
+// CreateNewUser - creates a new user
+// returns error if unable to create user
 func (us *UserService) CreateNewUser(user *User) error {
 	if err := us.HashPassword(user); err != nil {
 		return err
@@ -135,6 +146,8 @@ func (us *UserService) GetAllUsers() ([]User, error) {
 	return users, nil
 }
 
+// GetUser - gets user by the provided "user" data
+// returns error if unable to get user
 func (us *UserService) GetUser(user *User) error {
 	// checks if user exists
 	if err := us.IsExistingUser(*user); err != nil {	
@@ -152,6 +165,8 @@ func (us *UserService) GetUser(user *User) error {
 	return nil
 }
 
+// GetUserById - gets user by id
+// returns error if unable to get user
 func (us *UserService) GetUserById(id uint) (User, error) {
 	user := User { ID: id }
 
@@ -161,6 +176,8 @@ func (us *UserService) GetUserById(id uint) (User, error) {
 	return user, nil
 }
 
+// DeleteUserById - deletes user by id
+// returns error if unable to delete user
 func (us *UserService) DeleteUserById(id uint) error {
 	// checks if user exists
 	user, err := us.GetUserById(id); if err != nil {
@@ -173,6 +190,8 @@ func (us *UserService) DeleteUserById(id uint) error {
 	return nil
 }
 
+// IsExistingUser - checks if user exists
+// returns error if user does not exist
 func (us *UserService) IsExistingUser(user User) error {
 	if err := us.db.Where(user).First(&user).Error; err != nil {
 		switch err {
