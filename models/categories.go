@@ -3,32 +3,29 @@ package models
 import (
 	"errors"
 
-	"github.com/abdillahzakkie/silkroad/database"
 	"github.com/jackc/pgconn"
 	"gorm.io/gorm"
 )
 
-var (
-	ErrorCategoryNotFound = errors.New("category not found")
-	ErrorCategoryAlreadyExists = errors.New("category already exists")
-)
-
-type Category struct {
-	Model
-	ID uint   `gorm:"primaryKey" json:"category_id" schema:"category_id"`
-	Name       string `gorm:"not null;uniqueIndex" json:"name" schema:"name"`
-}
 
 type CategoryService struct {
 	db *gorm.DB
 }
 
-// create new UserService
-func NewCategoryService() *UserService {
-	us := UserService{
-		db: database.DB,
+// create new CategoryService
+func NewCategoryService(psqlInfo string) (*CategoryService, error) {
+	db, err := ConnectDatabase(psqlInfo); if err != nil {
+		return nil, err
 	}
-	return &us
+	cs := CategoryService{
+		db: db,
+	}
+
+	// auto migrate table
+	err = cs.AutoMigrate(); if err != nil {
+		return nil, err
+	}
+	return &cs, nil
 }
 
 // Close method close the database connection
@@ -40,55 +37,94 @@ func (cs *CategoryService) Close() error {
 	return nil
 }
 
+// AutoMigrate will try and automatically migrate table
+func (us *CategoryService) AutoMigrate() error {
+	if err := us.db.AutoMigrate(&Category{}); err != nil {
+		return errors.New("error while creating new 'categories' table")
+	}
+	return nil
+}
+
+// clear existing "users" table and auto migrate the table
+// to create new "users" table
+func (cs *CategoryService) DestructiveReset() error {
+	if err := cs.db.Migrator().DropTable("categories"); err != nil {
+		return errors.New("unable to delete 'categories' records")
+	}
+	// create new tables and index
+	if err := cs.AutoMigrate(); err != nil {
+		return errors.New("error while creating new 'categories' table")
+	}
+	return nil
+}
+
 // POST "/categories/new"
 // CreateNewCategory creates new category
-func (cs *CategoryService) CreateNewCategory(category Category) (Category, error) {
-	err := database.DB.Create(&category).Error;
-	switch err.(type) {
-		case *pgconn.PgError:
-			return category, ErrorCategoryAlreadyExists
+func (cs *CategoryService) CreateNewCategory(category *Category) error {
+	if err := cs.db.Create(category).Error; err != nil {
+		switch err.(type) {
+			case *pgconn.PgError:
+				return ErrAlreadyExists
+			default:
+				return ErrInternalServerError
+		}
 	}
-	return category, nil
+	
+	return nil
 }
 
 func (cs CategoryService) GetAllCategories() ([]Category, error) {
 	var categories []Category
-	err := database.DB.Find(&categories).Error; if err != nil {
-		return nil, err
+	if err := cs.db.Find(&categories).Error; err != nil {
+		return nil, ErrInternalServerError
 	}
 	return categories, nil
 }
 
 func (cs *CategoryService) GetCategoryById(id uint) (Category, error) {
-	var category Category
-
-	err := database.DB.Where("id = ?", id).Find(&category).Error;
-	switch err {
-		case gorm.ErrRecordNotFound:
-			return category, ErrorCategoryNotFound
+	category := Category{
+		ID: id,
 	}
-	return category, err
-}
+	// checks if user exists
+	if err := cs.IsExistingCategory(category); err != nil {
+		return category, err
+	}
 
-func (cs *CategoryService) GetCategoryByName(categoryName string) (Category, error) {
-	var category Category
-	err := database.DB.Where("name = ?", category.Name).First(&category).Error;
-	switch err {
-		case gorm.ErrRecordNotFound:
-			return category, ErrorCategoryNotFound
+	if err := cs.db.Where(category).First(&category).Error; err != nil {
+		switch err {
+			case gorm.ErrRecordNotFound:
+				return category, ErrNotFound
+			default:
+				return category, err
+		}
 	}
 	return category, nil
 }
 
-func (cs *CategoryService) IsExistingCategory(id uint) (bool, error) {
-	var category Category
-	err := database.DB.Where("id = ?", id).First(&category).Error; if err != nil {
+func (cs *CategoryService) GetCategoryByName(categoryName string) (Category, error) {
+	category := Category{
+		Name: categoryName,
+	}
+	if err := cs.db.Where(category).First(&category).Error; err != nil {
 		switch err {
 			case gorm.ErrRecordNotFound:
-				return false, nil
+				return category, ErrNotFound
 			default:
-				return false, err
+				return category, err
 		}
 	}
-	return true, nil
+	
+	return category, nil
+}
+
+func (cs *CategoryService) IsExistingCategory(category Category) error {
+	if err := cs.db.Where(category).First(&category).Error; err != nil {
+		switch err {
+			case gorm.ErrRecordNotFound:
+				return ErrNotFound
+			default:
+				return err
+		}
+	}
+	return nil
 }
