@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,42 +10,109 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// POST "/users/new"
+type UserSignUpForm struct {
+	Wallet   string 	`schema:"wallet,required"`
+	Username string 	`schema:"username,required"`
+	Email    string 	`schema:"email,required"`
+	Password string 	`schema:"password,required"`
+}
+
+type UserLoginForm struct {
+	Email    string 	`schema:"email"`
+	Password string 	`schema:"password,required"`
+}
+
 // CreateNewUser creates new user
+// POST "/users/new"
 func CreateNewUser(w http.ResponseWriter, r *http.Request) {
-	var userService models.UserService
-	var user models.User
-	
+	var form UserSignUpForm
 	// parse url-encoded form data
-	err := helpers.ParseForm(r, &user); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorString(err))
+	if err := helpers.ParseForm(r, &form); err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return 
 	}
 
-	// save user to database
-	user, err = userService.CreateNewUser(user)
-	switch err {
-		case nil:
-			break
-		case models.ErrorUserAlreadyExists:
-			helpers.RespondWithError(w, http.StatusBadRequest, helpers.ErrorString(err))
-			return
-		default:
-			helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
-			return
+	user := models.User {
+		Wallet: 	form.Wallet,
+		Username:   form.Username,
+		Email: 		form.Email,
+		Password:   form.Password,
 	}
 
+	// save user to database
+	userErr := make(chan error)
+	go func() {
+		userErr <- us.CreateNewUser(&user)
+	}()
+
+	if err, ok := <- userErr; err != nil {
+		if !ok {
+			helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		switch err {
+			case models.ErrInternalServerError:
+				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			default:
+				helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+				return
+		}
+	}
+
+	// if err := us.CreateNewUser(&user); err != nil {
+	// 	switch err {
+	// 		case models.ErrInternalServerError:
+	// 			helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+	// 			return
+	// 		default:
+	// 			helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+	// 			return
+	// 	}
+	// }
+
+
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }
 
-// GET "/users/all"
+// LoginUser logins user with the provided credentials
+// POST "/users/login"
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	var form UserLoginForm
+	if err := helpers.ParseForm(r, &form); err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// authenticate user 
+	user, err := us.Authenticate(form.Email, form.Password); if err != nil {
+		switch err {
+			case models.ErrNotFound:
+				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+			default:
+				helpers.RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
+		}
+	}
+
+	cookies := http.Cookie{
+		Name: "email",
+		Value: user.Email,
+	}
+	http.SetCookie(w, &cookies)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+}
+
 // GetAllUsers queries and returns all users
+// GET "/users/all"
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	var userService models.UserService
-	users, err := userService.GetAllUsers(); if err != nil {
-		helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
+	users, err := us.GetAllUsers(); if err != nil {
+		helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -55,27 +121,24 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
-// GET "/users?id=<id>"
 // GetUserById gets user by ID
+// GET "/users?id={id}"
 func GetUserById(w http.ResponseWriter, r *http.Request) {
-	var userService models.UserService
-
 	vars := mux.Vars(r)
 	id, err := (strconv.Atoi(vars["id"])); if err != nil {
 		helpers.RespondWithError(w, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
-	user, err := userService.GetUserById(uint(id))
-	switch err {
-		case nil:
-			break
-		case models.ErrorUserNotFound:
-			helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(err))
-			return
-		default:
-			helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
-			return
+	user, err := us.GetUserById(uint(id)); if err != nil {
+		switch err {
+			case models.ErrNotFound:
+				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				return
+			default:
+				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -83,10 +146,9 @@ func GetUserById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// DeleteUserById deletes user by ID
 // DELETE "/users/:id"
-// DeleteUser deletes user by ID
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var userService models.UserService
+func DeleteUserById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, err := strconv.Atoi(vars["user_id"]); if err != nil {
@@ -94,26 +156,15 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// checks if user exists
-	user := models.User{
-		ID: uint(id),
-	}
-
-	err = userService.IsExistingUser(user)
-	switch err {
-		case nil:
-			break
-		case models.ErrorUserNotFound:
-			helpers.RespondWithError(w, http.StatusNotFound, helpers.ErrorString(err))
-			return
-		default:
-			helpers.RespondWithError(w, http.StatusInternalServerError, helpers.ErrorString(err))
-			return
-	}
-
-	err = userService.DeleteUser(user.ID); if err != nil {
-		helpers.RespondWithError(w, http.StatusNotFound, fmt.Sprintf("%v", err))
-		return
+	if err := us.DeleteUserById(uint(id)); err != nil {
+		switch err {
+			case models.ErrNotFound:
+				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				return
+			default:
+				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
