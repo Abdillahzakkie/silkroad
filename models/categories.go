@@ -22,7 +22,7 @@ func NewCategoryService(psqlInfo string) (*CategoryService, error) {
 	}
 
 	// auto migrate table
-	err = cs.AutoMigrate(); if err != nil {
+	if err := cs.AutoMigrate(); err != nil {
 		return nil, err
 	}
 	return &cs, nil
