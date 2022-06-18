@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgconn"
 	"golang.org/x/crypto/bcrypt"
@@ -113,7 +112,6 @@ func (us *UserService) Authenticate(email, password string) (User, error) {
 	}
 	// verify user's password
 	if err := us.VerifyHashedPassword(password, user.PasswordHash); err != nil {
-		fmt.Println(err)
 		return User{}, ErrInvalidCredentials
 	}
 
