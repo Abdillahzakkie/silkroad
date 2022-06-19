@@ -3,16 +3,19 @@ package models
 import (
 	"errors"
 
+	"github.com/abdillahzakkie/silkroad/hmac"
 	"github.com/jackc/pgconn"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 const passwordPepper = "test-pepper"
+const hmacSecretKey = "secret-hmac-key"
 
 
 type UserService struct {
 	db *gorm.DB
+	hmac hmac.HMAC
 }
 
 // NewUserService - creates a new user service
@@ -23,8 +26,11 @@ func NewUserService(psqlInfo string) (*UserService, error) {
 		return nil, err
 	}
 
+	hmac := hmac.NewHMAC(hmacSecretKey)
+
 	us := UserService{
 		db: db,
+		hmac: hmac,
 	}
 	// auto migrate table
 	if err = us.AutoMigrate(); err != nil {
