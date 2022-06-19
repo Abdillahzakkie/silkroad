@@ -2,19 +2,26 @@ version: "3.8"
 
 services:
   backend:
-    container_name: "silkroad"
+    # container_name: "silkroad"
     build:
       context: .
     depends_on:
-      - "postgres"
+      - database
     ports:
       - "8080:8080"
-    restart: "always"
+    networks:
+      - postgres-db
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
   database:
-    container_name: "postgres"
+    # container_name: "postgres"
     image: postgres:14.3
-    restart: "always"
     ports:
       - "5432:5432"
     environment:
@@ -23,5 +30,16 @@ services:
       POSTGRES_DB: silkroad
     volumes:
       - dbdata:/var/lib/postgressql/data
+    networks:
+      - postgres-db
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 volumes:
   dbdata:
+networks:
+  postgres-db:
