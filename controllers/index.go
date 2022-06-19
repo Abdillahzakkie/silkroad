@@ -11,6 +11,7 @@ var (
 	cs *models.CategoryService
 )
 
+
 func init() {
 	psqlInfo, err := models.GetPsqlInfo("silkroad"); if err != nil {
 		log.Fatal(err)
@@ -25,6 +26,6 @@ func init() {
 	}
 
 	// clear all tables
-	// us.DestructiveReset()
-	// cs.DestructiveReset()
+	us.DestructiveReset()
+	cs.DestructiveReset()
 }
