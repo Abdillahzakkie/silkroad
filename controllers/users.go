@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/abdillahzakkie/silkroad/helpers"
 	"github.com/abdillahzakkie/silkroad/models"
@@ -20,6 +21,16 @@ type UserSignUpForm struct {
 type UserLoginForm struct {
 	Email    string 	`schema:"email"`
 	Password string 	`schema:"password,required"`
+}
+
+func signIn(w http.ResponseWriter, user *models.User) {
+	cookies := http.Cookie{
+		Name: "email",
+		Value: user.Email,
+		HttpOnly: true,
+		Expires: time.Now().Add(5 * time.Second),
+	}
+	http.SetCookie(w, &cookies)
 }
 
 // CreateNewUser creates new user
@@ -73,7 +84,7 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	// }
 
 
-	
+	signIn(w, &user)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
@@ -100,11 +111,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cookies := http.Cookie{
-		Name: "email",
-		Value: user.Email,
-	}
-	http.SetCookie(w, &cookies)
+	signIn(w, &user)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
