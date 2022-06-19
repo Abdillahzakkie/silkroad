@@ -2,7 +2,7 @@ package hmac
 
 import (
 	"crypto/hmac"
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"hash"
 )
@@ -14,7 +14,7 @@ type HMAC struct {
 
 // NewHMAC creates and returns a new HMAC object
 func NewHMAC(key string) HMAC {
-	h := hmac.New(sha256.New, []byte(key))
+	h := hmac.New(sha512.New, []byte(key))
 
 	return HMAC{
 		hmac: h,
