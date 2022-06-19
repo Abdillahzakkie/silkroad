@@ -38,6 +38,8 @@ type Model struct {
 type User struct {
 	Model
 	ID       			uint    	`gorm:"primaryKey" json:"id"`
+	Remember 			string		`gorm:"-" json:"-"`
+	RememberHash		string		`gorm:"not null;unique_index"`
 	Wallet   			string 		`gorm:"not null;uniqueIndex" json:"wallet"`
 	Username 			string 		`gorm:"not null;uniqueIndex" json:"username"`
 	Email    			string 		`gorm:"not null;uniqueIndex" json:"-"`
