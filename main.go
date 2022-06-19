@@ -60,7 +60,6 @@ func main() {
 	// // GET "/products?seller_id=<seller_id>"
 	// // Create new category
 	// router.HandleFunc("/products", controllers.GetProductsBySellerId).Queries("seller_id", "{seller_id}").Methods(http.MethodGet)
-
 	startServer(router)
 }
 
