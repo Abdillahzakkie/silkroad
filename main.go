@@ -11,72 +11,55 @@ import (
 	"time"
 
 	"github.com/abdillahzakkie/silkroad/controllers"
-	"github.com/abdillahzakkie/silkroad/database"
 	"github.com/gorilla/mux"
 )
+
+func notFoundRoute(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "404 Not Found", http.StatusNotFound)
+}
 
 
 func main() {
 	router := mux.NewRouter()
-	sqlDB, err := database.DB.DB(); if err != nil {
-		log.Fatalln(err)
-	}
-	// defer closing DB connection
-	defer sqlDB.Close()
-	
-	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	sqlDB.SetMaxIdleConns(5)
-
-	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	sqlDB.SetMaxOpenConns(10)
+	// sqlDB, err := database.DB.DB(); if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// // defer closing DB connection
+	// defer sqlDB.Close()
+	// // SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	// sqlDB.SetMaxIdleConns(5)
+	// // SetMaxOpenConns sets the maximum number of open connections to the database.
+	// sqlDB.SetMaxOpenConns(10)
 
 	// GET "*" handles all unknown routes
 	router.NotFoundHandler = http.HandlerFunc(notFoundRoute)
 
-	// POST "/users/signup"
-	// Creates new user
 	router.HandleFunc("/users/signup", controllers.CreateNewUser).Methods(http.MethodPost)
-
-	// GET "/users"
-	// Get all users
+	router.HandleFunc("/users/login", controllers.LoginUser).Methods(http.MethodPost)
 	router.HandleFunc("/users/all", controllers.GetAllUsers).Methods(http.MethodGet)
-
-	// GET "/users/:id"
-	// Get user by ID
 	router.HandleFunc("/users", controllers.GetUserById).Queries("id", "{id}").Methods(http.MethodGet)
+	router.HandleFunc("/users/{user_id}", controllers.DeleteUserById).Methods(http.MethodDelete)
 
-	// DELETE "/users/:user_id"
-	// Delete user by ID
-	router.HandleFunc("/users/{user_id}", controllers.DeleteUser).Methods(http.MethodDelete)
 
-	// POST "/categories/new"
-	// Create new category
 	router.HandleFunc("/categories/new", controllers.CreateNewCategory).Methods(http.MethodPost)
-
-	// GET "/categories"
-	// Get all categories
 	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodGet)
-
-	// GET "/categories/:category_id"
-	// Get category by Category ID
 	router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodGet)
 
-	// POST "/products/new"
-	// Create new category
-	router.HandleFunc("/products/new", controllers.CreateNewProduct).Methods(http.MethodPost)
+	// // POST "/products/new"
+	// // Create new category
+	// router.HandleFunc("/products/new", controllers.CreateNewProduct).Methods(http.MethodPost)
 
-	// GET "/products"
-	// Get all products
-	router.HandleFunc("/products/all", controllers.GetAllProducts).Methods(http.MethodGet)
+	// // GET "/products"
+	// // Get all products
+	// router.HandleFunc("/products/all", controllers.GetAllProducts).Methods(http.MethodGet)
 
-	// GET "/products/:product_id"
-	// Create new category
-	router.HandleFunc("/products/{product_id}", controllers.GetProductById).Methods(http.MethodGet)
+	// // GET "/products/:product_id"
+	// // Create new category
+	// router.HandleFunc("/products/{product_id}", controllers.GetProductById).Methods(http.MethodGet)
 
-	// GET "/products?seller_id=<seller_id>"
-	// Create new category
-	router.HandleFunc("/products", controllers.GetProductsBySellerId).Queries("seller_id", "{seller_id}").Methods(http.MethodGet)
-
+	// // GET "/products?seller_id=<seller_id>"
+	// // Create new category
+	// router.HandleFunc("/products", controllers.GetProductsBySellerId).Queries("seller_id", "{seller_id}").Methods(http.MethodGet)
 	startServer(router)
 }
 
@@ -111,8 +94,4 @@ func startServer(r *mux.Router) {
     srv.Shutdown(ctx)
     log.Println("shutting down")
     os.Exit(0)
-}
-
-func notFoundRoute(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "404 Not Found", http.StatusNotFound)
 }

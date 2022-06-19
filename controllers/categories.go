@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,30 +10,36 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type CategorySignUpForm struct {
+	Name    string 		`schema:"name"`
+}
+
 // POST "/categories/new"
 // CreateNewCategory creates new category
 func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
-	var category models.Category
+	var form CategorySignUpForm
 	// parse url-encoded form data
-	err := helpers.ParseForm(r, &category); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
+	if err := helpers.ParseForm(r, &form); err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	
+	category := models.Category {
+		Name: 	form.Name,
 	}
 
-	if category.Name == "" {
-		helpers.RespondWithError(w, http.StatusBadRequest, "name is required")
-		return
-	}
-
-	category.GetCategoryByName(); if category.ID != 0 {
-		helpers.RespondWithError(w, http.StatusNotFound, "category has already existed")
-		return
-	}
 	// insert record into DB
-	err = category.CreateNewCategory(); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
-		return
+	if err := cs.CreateNewCategory(&category); err != nil {
+		switch err {
+			case models.ErrAlreadyExists:
+				helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+				return
+			default:
+				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+		}
 	}
+	
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -44,11 +49,8 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 // GET "/categories"
 // GetAllCategories queries and returns all categories
 func GetAllCategories(w http.ResponseWriter, r *http.Request) {
-	var category models.Category
-	var categories []models.Category
-
-	categories, err := category.GetAllCategories(); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("%v", err))
+	categories, err := cs.GetAllCategories(); if err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -60,18 +62,20 @@ func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 // GET "/categories/:category_id"
 // GetCategoryById gets category by ID
 func GetCategoryById(w http.ResponseWriter, r *http.Request) {
-	var category models.Category
-	var err error
-	
 	vars := mux.Vars(r)
-	category.ID, err  = strconv.Atoi(vars["category_id"]); if err != nil {
+	id, err  := strconv.Atoi(vars["category_id"]); if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, "invalid category id received")
 		return
 	}
-
-	err = category.GetCategoryById(); if err != nil {
-		helpers.RespondWithError(w, http.StatusNotFound, "category does not exist")
-		return
+	category, err := cs.GetCategoryById(uint(id)); if err != nil {
+		switch err {
+			case models.ErrNotFound:
+				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				return
+			default:
+				helpers.RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
+				return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
