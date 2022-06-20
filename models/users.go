@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/abdillahzakkie/silkroad/hmac"
+	"github.com/abdillahzakkie/silkroad/rand"
 	"github.com/jackc/pgconn"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -130,6 +131,15 @@ func (us *UserService) CreateNewUser(user *User) error {
 	if err := us.HashPassword(user); err != nil {
 		return err
 	}
+	// creates new Remember Token
+	var err error
+	user.Remember, err = rand.RememberToken(); if err != nil {
+		return err
+	}
+	// generate new RememberHash Token
+	user.RememberHash, err = us.hmac.Hash(user.Remember); if err != nil {
+		return err
+	}
 	// save new user to database
 	if err := us.db.Create(&user).Error; err != nil {
 		switch err.(type) {
@@ -142,6 +152,8 @@ func (us *UserService) CreateNewUser(user *User) error {
 	return nil
 }
 
+// GetAllUsers - gets all users
+// returns error if unable to get users
 func (us *UserService) GetAllUsers() ([]User, error) {
 	var users []User
 	if err := us.db.Find(&users).Error; err != nil {
