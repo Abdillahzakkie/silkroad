@@ -76,7 +76,7 @@ func startServer(r *mux.Router) {
         WriteTimeout: time.Second * 15,
         ReadTimeout:  time.Second * 15,
         IdleTimeout:  time.Second * 60,
-        Handler: r, // Pass our instance of gorilla/mux in.
+        Handler: r,
     }
 
     go func() {

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/abdillahzakkie/silkroad/helpers"
 	"github.com/abdillahzakkie/silkroad/models"
 	"github.com/gorilla/mux"
 )
@@ -38,8 +37,8 @@ func signIn(w http.ResponseWriter, user *models.User) {
 func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	var form UserSignUpForm
 	// parse url-encoded form data
-	if err := helpers.ParseForm(r, &form); err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := ParseForm(r, &form); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return 
 	}
 
@@ -58,16 +57,16 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 
 	if err, ok := <- userErr; err != nil {
 		if !ok {
-			helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		switch err {
 			case models.ErrInternalServerError:
-				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+				RespondWithError(w, http.StatusBadRequest, err.Error())
 				return
 		}
 	}
@@ -75,10 +74,10 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	// if err := us.CreateNewUser(&user); err != nil {
 	// 	switch err {
 	// 		case models.ErrInternalServerError:
-	// 			helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+	// 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 	// 			return
 	// 		default:
-	// 			helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+	// 			RespondWithError(w, http.StatusBadRequest, err.Error())
 	// 			return
 	// 	}
 	// }
@@ -94,8 +93,8 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 // POST "/users/login"
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var form UserLoginForm
-	if err := helpers.ParseForm(r, &form); err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := ParseForm(r, &form); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -103,10 +102,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := us.Authenticate(form.Email, form.Password); if err != nil {
 		switch err {
 			case models.ErrInvalidCredentials:
-				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusNotFound, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
+				RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
 				return
 		}
 	}
@@ -121,7 +120,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 // GET "/users/all"
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := us.GetAllUsers(); if err != nil {
-		helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -135,17 +134,17 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 func GetUserById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := (strconv.Atoi(vars["id"])); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, "invalid user ID")
+		RespondWithError(w, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
 	user, err := us.GetUserById(uint(id)); if err != nil {
 		switch err {
 			case models.ErrNotFound:
-				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusNotFound, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 		}
 	}
@@ -161,17 +160,17 @@ func DeleteUserById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, err := strconv.Atoi(vars["user_id"]); if err != nil {
-		helpers.RespondWithError(w, http.StatusNotFound, "invalid user id")
+		RespondWithError(w, http.StatusNotFound, "invalid user id")
 		return
 	}
 
 	if err := us.DeleteUserById(uint(id)); err != nil {
 		switch err {
 			case models.ErrNotFound:
-				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusNotFound, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 		}
 	}

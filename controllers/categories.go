@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/abdillahzakkie/silkroad/helpers"
 	"github.com/abdillahzakkie/silkroad/models"
 	"github.com/gorilla/mux"
 )
@@ -19,8 +18,8 @@ type CategorySignUpForm struct {
 func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	var form CategorySignUpForm
 	// parse url-encoded form data
-	if err := helpers.ParseForm(r, &form); err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+	if err := ParseForm(r, &form); err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	
@@ -32,10 +31,10 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 	if err := cs.CreateNewCategory(&category); err != nil {
 		switch err {
 			case models.ErrAlreadyExists:
-				helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+				RespondWithError(w, http.StatusBadRequest, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 		}
 	}
@@ -50,7 +49,7 @@ func CreateNewCategory(w http.ResponseWriter, r *http.Request) {
 // GetAllCategories queries and returns all categories
 func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := cs.GetAllCategories(); if err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -64,16 +63,16 @@ func GetAllCategories(w http.ResponseWriter, r *http.Request) {
 func GetCategoryById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err  := strconv.Atoi(vars["category_id"]); if err != nil {
-		helpers.RespondWithError(w, http.StatusNotFound, "invalid category id received")
+		RespondWithError(w, http.StatusNotFound, "invalid category id received")
 		return
 	}
 	category, err := cs.GetCategoryById(uint(id)); if err != nil {
 		switch err {
 			case models.ErrNotFound:
-				helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusNotFound, err.Error())
 				return
 			default:
-				helpers.RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
+				RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
 				return
 		}
 	}
