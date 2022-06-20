@@ -117,7 +117,6 @@ func TestCreateUser(t *testing.T) {
 	if user.RememberHash == "" {
 		t.Error(errorResponse("", user.RememberHash))
 	}
-
 }
 
 func TestGetAllUsers(t *testing.T) {
@@ -170,6 +169,27 @@ func TestDeleteUserById(t *testing.T) {
 		if !errors.Is(err, ErrNotFound) {
 			t.Errorf(err.Error())
 		}
+	}
+}
+
+func TestGetUserByRememberHash(t *testing.T) {
+	us, err := testingUserService(); if err != nil {
+		t.Errorf(err.Error())
+	}
+	// close database connection
+	defer us.Close()
+
+	user := getUser()
+	if err := us.CreateNewUser(user); err != nil {
+		t.Errorf(err.Error())
+	}
+	// get user by Remember Token
+	foundUser, err := us.GetUserByRememberHash(user.Remember); if err != nil {
+		t.Errorf(err.Error())
+	}
+	// assert that foundUser = user
+	if foundUser.ID != user.ID {
+		t.Errorf(errorResponse(user.ID, foundUser.ID))
 	}
 }
 
