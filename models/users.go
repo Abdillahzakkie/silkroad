@@ -152,6 +152,24 @@ func (us *UserService) CreateNewUser(user *User) error {
 	return nil
 }
 
+// GetUserByRememberHash - gets user by remember token
+// this method will handle hashing the token and
+// returns error if unable to get user
+func (us *UserService) GetUserByRememberHash(token string) (User, error) {
+	hashedToken, err := us.hmac.Hash(token); if err != nil {
+		return User{}, err
+	}
+	user := User{
+		RememberHash: hashedToken,
+	}
+
+	if err := us.GetUser(&user); err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}
+
 // GetAllUsers - gets all users
 // returns error if unable to get users
 func (us *UserService) GetAllUsers() ([]User, error) {
