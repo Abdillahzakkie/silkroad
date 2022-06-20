@@ -109,12 +109,15 @@ func TestCreateUser(t *testing.T) {
 	if time.Since(user.UpdatedAt) > time.Duration(5 * time.Second) {
 		t.Error(errorResponse("soon", user.UpdatedAt))
 	}
+	// assert that user.Remember is set properly
+	if user.Remember == "" {
+		t.Error(errorResponse("", user.Remember))
+	}
 	// assert that user.RememberHash is set properly
 	if user.RememberHash == "" {
 		t.Error(errorResponse("", user.RememberHash))
 	}
 
-	fmt.Println(user.Remember)
 }
 
 func TestGetAllUsers(t *testing.T) {
