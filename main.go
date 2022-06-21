@@ -21,16 +21,6 @@ func notFoundRoute(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	router := mux.NewRouter()
-	// sqlDB, err := database.DB.DB(); if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// // defer closing DB connection
-	// defer sqlDB.Close()
-	// // SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	// sqlDB.SetMaxIdleConns(5)
-	// // SetMaxOpenConns sets the maximum number of open connections to the database.
-	// sqlDB.SetMaxOpenConns(10)
-
 	// GET "*" handles all unknown routes
 	router.NotFoundHandler = http.HandlerFunc(notFoundRoute)
 
