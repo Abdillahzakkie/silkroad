@@ -22,14 +22,23 @@ type UserLoginForm struct {
 	Password string 	`schema:"password,required"`
 }
 
-func signIn(w http.ResponseWriter, user *models.User) {
+func signIn(w http.ResponseWriter, user *models.User) error {
+	// check if user.Remember token is set
+	if user.Remember == "" {
+		token, err := us.GenerateRememberToken(); if err != nil {
+			return models.ErrInternalServerError
+		}
+		user.Remember = token
+	}
+	// set user.RememberHash
 	cookies := http.Cookie{
-		Name: "email",
-		Value: user.Email,
+		Name: "token",
+		Value: user.Remember,
 		HttpOnly: true,
-		Expires: time.Now().Add(5 * time.Second),
+		Expires: time.Now().Add(24 * time.Hour),
 	}
 	http.SetCookie(w, &cookies)
+	return nil
 }
 
 // CreateNewUser creates new user
@@ -83,7 +92,10 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 	// }
 
 
-	signIn(w, &user)
+	if err := signIn(w, &user); err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
@@ -102,7 +114,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := us.Authenticate(form.Email, form.Password); if err != nil {
 		switch err {
 			case models.ErrInvalidCredentials:
-				RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusUnauthorized, err.Error())
 				return
 			default:
 				RespondWithError(w, http.StatusInternalServerError, models.ErrInternalServerError.Error())
@@ -110,7 +122,11 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	signIn(w, &user)
+	if err := signIn(w, &user); err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
