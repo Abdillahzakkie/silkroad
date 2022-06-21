@@ -27,11 +27,9 @@ func NewUserService(psqlInfo string) (*UserService, error) {
 		return nil, err
 	}
 
-	hmac := hmac.NewHMAC(hmacSecretKey)
-
 	us := UserService{
 		db: db,
-		hmac: hmac,
+		hmac: hmac.NewHMAC(hmacSecretKey),
 	}
 	// auto migrate table
 	if err = us.AutoMigrate(); err != nil {
@@ -125,6 +123,15 @@ func (us *UserService) Authenticate(email, password string) (User, error) {
 	return user, nil
 }
 
+// GenerateRememberToken - generates login token
+// return ErrInternalServerError if an error is encountered
+func (us *UserService) GenerateRememberToken() (string, error) {
+	token, err := rand.RememberToken(); if err != nil {
+		return "", ErrInternalServerError
+	}
+	return token, nil
+}
+
 // CreateNewUser - creates a new user
 // returns error if unable to create user
 func (us *UserService) CreateNewUser(user *User) error {
@@ -210,20 +217,6 @@ func (us *UserService) GetUserById(id uint) (User, error) {
 	return user, nil
 }
 
-// DeleteUserById - deletes user by id
-// returns error if unable to delete user
-func (us *UserService) DeleteUserById(id uint) error {
-	// checks if user exists
-	user, err := us.GetUserById(id); if err != nil {
-		return err
-	}
-	// delete record from database
-	if err := us.db.Where(user).Delete(&user).Error; err != nil {
-		return ErrInternalServerError
-	}
-	return nil
-}
-
 // IsExistingUser - checks if user exists
 // returns error if user does not exist
 func (us *UserService) IsExistingUser(user User) error {
@@ -234,6 +227,35 @@ func (us *UserService) IsExistingUser(user User) error {
 			default:
 				return err
 		}
+	}
+	return nil
+}
+
+// UpdateUser - checks if user exists
+// update user's credentials with the one passed in
+// returns error if user does not exist
+func (us *UserService) UpdateUser(user User) error {
+	if err := us.db.Model(&user).Updates(user).Error; err != nil {
+		switch err {
+			case gorm.ErrRecordNotFound:
+				return ErrNotFound
+			default:
+				return err
+		}
+	}
+	return nil
+}
+
+// DeleteUserById - deletes user by id
+// returns error if unable to delete user
+func (us *UserService) DeleteUserById(id uint) error {
+	// checks if user exists
+	user, err := us.GetUserById(id); if err != nil {
+		return err
+	}
+	// delete record from database
+	if err := us.db.Where(user).Delete(&user).Error; err != nil {
+		return ErrInternalServerError
 	}
 	return nil
 }
