@@ -172,6 +172,23 @@ func TestDeleteUserById(t *testing.T) {
 	}
 }
 
+func TestGenerateRememberToken(t *testing.T) {
+	us, err := testingUserService(); if err != nil {
+		t.Errorf(err.Error())
+	}
+	// close database connection
+	defer us.Close()
+
+	// generate remember token
+	rememberToken, err := us.GenerateRememberToken(); if err != nil {
+		t.Errorf(err.Error())
+	}
+	// assert that remember token is not null
+	if rememberToken == "" {
+		t.Error(errorResponse("new rememberToken", "null"))
+	}
+}
+
 func TestGetUserByRememberHash(t *testing.T) {
 	us, err := testingUserService(); if err != nil {
 		t.Errorf(err.Error())
