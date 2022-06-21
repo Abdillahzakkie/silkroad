@@ -16,7 +16,6 @@ var (
 	cs *models.CategoryService
 )
 
-
 func init() {
 	psqlInfo, err := models.GetPsqlInfo("silkroad"); if err != nil {
 		log.Fatal(err)
