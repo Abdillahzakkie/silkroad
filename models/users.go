@@ -13,7 +13,59 @@ import (
 const passwordPepper = "test-pepper"
 const hmacSecretKey = "secret-hmac-key"
 
-type UserService struct {
+// UserDB is used to interact with the users table
+// For Single user queries, any error but not ErrNotFound
+// should be handled as 500 ErrInternalServerError
+type UserDB interface {
+	// Methods for querying users
+	GetUserById(id uint) (User, error)
+	GetAllUsers() ([]User, error)
+	GetUserByRememberHash(token string) (User, error)
+	GenerateRememberToken() (string, error)
+
+	// Methods for altering users
+	CreateNewUser(user *User) error
+	UpdateUser(user User) error
+	DeleteUserById(id uint) error
+
+	// Used to close a DB connection
+	Close() error
+
+	// Migration helpers
+	AutoMigrate() error
+	DestructiveReset() error
+
+	// helper functions
+	getUser(user *User) error
+	verifyHashedPassword(password, passwordHash string) error
+	isExistingUser(user User) error
+	hashPassword(user *User) error
+}
+
+// UserService is a set of methods used to
+// work with user model
+type UserService interface {
+	// Authenticate will verify the provided email and password correct
+	// if they are correct the user corresponding to that email will be returned
+	// otherwise it will  return either:
+	// ErrNotFound, ErrInvalidCredentials or another error
+	// if something goes bad
+	Authenticate(email, password string) (User, error)
+	UserDB
+}
+
+var _ UserDB = &userService{}
+type userService struct {
+	UserDB
+}
+
+var _ UserDB = &userValidator{}
+type userValidator struct {
+	UserDB
+}
+
+var _ UserDB = &userGorm{}
+type userGorm struct {
 	db *gorm.DB
 	hmac hmac.HMAC
 }
@@ -23,27 +75,48 @@ type UserService struct {
 	returns a pointer to the newly created UserService instance as it's first value
 	and an error if one occurred as it's second value
 */
-func NewUserService(psqlInfo string) (*UserService, error) {
+func NewUserService(psqlInfo string) (UserService, error) {
+	ug, err := newUserGorm(psqlInfo); if err != nil {
+		return nil, err
+	}
+
+	// auto migrate table
+	if err := ug.AutoMigrate(); err != nil {
+		return nil, err
+	}
+
+	us := userService{
+		UserDB: &userValidator {
+			UserDB: ug,
+		},
+	}
+
+	return &us, nil
+}
+
+/*
+	NewUserService creates a new user service
+	returns a pointer to the newly created UserService instance as it's first value
+	and an error if one occurred as it's second value
+*/
+func newUserGorm(psqlInfo string) (*userGorm, error) {
 	db, err := ConnectDatabase(psqlInfo); if err != nil {
 		return nil, err
 	}
 
-	us := UserService{
-		db: db,
+	ug := userGorm{
 		hmac: hmac.NewHMAC(hmacSecretKey),
+		db: db,
 	}
-	// auto migrate table
-	if err = us.AutoMigrate(); err != nil {
-		return nil, err
-	}
-	return &us, nil
+
+	return &ug, nil
 }
 
 /*
 	Close closes the database connection
 	returns error if unable to close connection
 */
-func (us *UserService) Close() error {
+func (us *userGorm) Close() error {
 	sql, err := us.db.DB(); if err != nil {
 		return err
 	}
@@ -55,8 +128,8 @@ func (us *UserService) Close() error {
 	AutoMigrate auto migrates the users table
 	returns error if unable to create table
 */
-func (us *UserService) AutoMigrate() error {
-	if err := us.db.AutoMigrate(&User{}); err != nil {
+func (ug *userGorm) AutoMigrate() error {
+	if err := ug.db.AutoMigrate(&User{}); err != nil {
 		return errors.New("error while creating new 'users' table")
 	}
 	return nil
@@ -66,31 +139,13 @@ func (us *UserService) AutoMigrate() error {
 	DestructiveReset drops the users table and creates a new one
 	returns error if unable to drop table or re-create it
 */
-func (us *UserService) DestructiveReset() error {
-	if err := us.db.Migrator().DropTable("users"); err != nil {
+func (ug *userGorm) DestructiveReset() error {
+	if err := ug.db.Migrator().DropTable("users"); err != nil {
 		return errors.New("unable to delete 'users' records")
 	}
 	// create new tables and index
-	if err := us.AutoMigrate(); err != nil {
+	if err := ug.AutoMigrate(); err != nil {
 		return errors.New("error while creating new 'users' table")
-	}
-	return nil
-}
-
-/*
-	VerifyHashedPassword verifies the provided password against the hashed password
-	returns error if unable to verify password
-*/
-func (us *UserService) VerifyHashedPassword(password, passwordHash string) error {
-	passwordByte := []byte(password + passwordPepper)
-	password = ""
-	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), passwordByte); err != nil {
-		switch err {
-			case bcrypt.ErrMismatchedHashAndPassword:
-				return ErrInvalidCredentials
-			default:
-				return err
-		}
 	}
 	return nil
 }
@@ -99,7 +154,7 @@ func (us *UserService) VerifyHashedPassword(password, passwordHash string) error
 	Authenticate authenticates the user and returns the user object
 	returns error if unable to authenticate user
 */
-func (us *UserService) Authenticate(email, password string) (User, error) {
+func (us *userService) Authenticate(email, password string) (User, error) {
 	user := User {
 		Email: email,
 	}
@@ -114,30 +169,63 @@ func (us *UserService) Authenticate(email, password string) (User, error) {
 		}
 	}
 	// verify user's password
-	if err := us.VerifyHashedPassword(password, user.PasswordHash); err != nil {
+	if err := us.verifyHashedPassword(password, user.PasswordHash); err != nil {
 		return User{}, ErrInvalidCredentials
+	}
+	return user, nil
+}
+
+/*
+	GetUserById gets user by id
+	returns error if unable to get user
+*/
+func (ug *userGorm) GetUserById(id uint) (User, error) {
+	user := User { ID: id }
+
+	if err := ug.getUser(&user); err != nil {
+		return User{}, err
+	}
+	return user, nil
+}
+
+/*
+	GetAllUsers gets all users
+	returns error if unable to get users
+*/
+func (ug *userGorm) GetAllUsers() ([]User, error) {
+	var users []User
+	if err := ug.db.Find(&users).Error; err != nil {
+		return nil, ErrInternalServerError
+	}
+	return users, nil
+}
+
+/*
+	GetUserByRememberHash gets user by remember token
+	this method will handle hashing the token and
+	returns error if unable to get user
+*/
+func (ug *userGorm) GetUserByRememberHash(token string) (User, error) {
+	hashedToken, err := ug.hmac.Hash(token); if err != nil {
+		return User{}, err
+	}
+	user := User{
+		RememberHash: hashedToken,
+	}
+
+	if err := ug.getUser(&user); err != nil {
+		return User{}, err
 	}
 
 	return user, nil
 }
 
 /*
-	GenerateRememberToken generates login token
-	return ErrInternalServerError if an error is encountered
-*/
-func (us *UserService) GenerateRememberToken() (string, error) {
-	token, err := rand.RememberToken(); if err != nil {
-		return "", ErrInternalServerError
-	}
-	return token, nil
-}
-
-/*
 	CreateNewUser creates a new user
 	returns error if unable to create user
 */
-func (us *UserService) CreateNewUser(user *User) error {
-	if err := us.hashPassword(user); err != nil {
+func (ug *userGorm) CreateNewUser(user *User) error {
+	if err := ug.hashPassword(user); err != nil {
 		return err
 	}
 	// creates new Remember Token
@@ -146,11 +234,11 @@ func (us *UserService) CreateNewUser(user *User) error {
 		return err
 	}
 	// generate new RememberHash Token
-	user.RememberHash, err = us.hmac.Hash(user.Remember); if err != nil {
+	user.RememberHash, err = ug.hmac.Hash(user.Remember); if err != nil {
 		return err
 	}
 	// save new user to database
-	if err := us.db.Create(&user).Error; err != nil {
+	if err := ug.db.Create(&user).Error; err != nil {
 		switch err.(type) {
 			case *pgconn.PgError:
 				return ErrAlreadyExists
@@ -162,57 +250,12 @@ func (us *UserService) CreateNewUser(user *User) error {
 }
 
 /*
-	GetUserByRememberHash gets user by remember token
-	this method will handle hashing the token and
-	returns error if unable to get user
-*/
-func (us *UserService) GetUserByRememberHash(token string) (User, error) {
-	hashedToken, err := us.hmac.Hash(token); if err != nil {
-		return User{}, err
-	}
-	user := User{
-		RememberHash: hashedToken,
-	}
-
-	if err := us.getUser(&user); err != nil {
-		return User{}, err
-	}
-
-	return user, nil
-}
-
-/*
-	GetUserById gets user by id
-	returns error if unable to get user
-*/
-func (us *UserService) GetUserById(id uint) (User, error) {
-	user := User { ID: id }
-
-	if err := us.getUser(&user); err != nil {
-		return User{}, err
-	}
-	return user, nil
-}
-
-/*
-	GetAllUsers gets all users
-	returns error if unable to get users
-*/
-func (us *UserService) GetAllUsers() ([]User, error) {
-	var users []User
-	if err := us.db.Find(&users).Error; err != nil {
-		return nil, ErrInternalServerError
-	}
-	return users, nil
-}
-
-/*
 	UpdateUser checks if user exists
 	update user's credentials with the one passed in
 	returns error if user does not exist
 */
-func (us *UserService) UpdateUser(user User) error {
-	if err := us.db.Model(&user).Updates(user).Error; err != nil {
+func (ug *userGorm) UpdateUser(user User) error {
+	if err := ug.db.Model(&user).Updates(user).Error; err != nil {
 		switch err {
 			case gorm.ErrRecordNotFound:
 				return ErrNotFound
@@ -227,27 +270,37 @@ func (us *UserService) UpdateUser(user User) error {
 	DeleteUserById - deletes user by id
 	returns error if unable to delete user
 */
-func (us *UserService) DeleteUserById(id uint) error {
+func (ug *userGorm) DeleteUserById(id uint) error {
 	// checks if user exists
-	user, err := us.GetUserById(id); if err != nil {
+	user, err := ug.GetUserById(id); if err != nil {
 		return err
 	}
 	// delete record from database
-	if err := us.db.Where(user).Delete(&user).Error; err != nil {
+	if err := ug.db.Where(user).Delete(&user).Error; err != nil {
 		return ErrInternalServerError
 	}
 	return nil
 }
 
+/*
+	GenerateRememberToken generates login token
+	return ErrInternalServerError if an error is encountered
+*/
+func (ug *userGorm) GenerateRememberToken() (string, error) {
+	token, err := rand.RememberToken(); if err != nil {
+		return "", ErrInternalServerError
+	}
+	return token, nil
+}
 
 // Helpers functions
 /*
 	getUser gets user by the provided "user" data
 	returns error if unable to get user
 */
-func (us *UserService) getUser(user *User) error {
+func (ug *userGorm) getUser(user *User) error {
 	// checks if user exists
-	if err := us.isExistingUser(*user); err != nil {	
+	if err := ug.isExistingUser(*user); err != nil {	
 		switch err {
 			case ErrNotFound:
 				return err
@@ -256,7 +309,7 @@ func (us *UserService) getUser(user *User) error {
 		}
 	}
 
-	if err := us.db.Where(user).First(&user).Error; err != nil {
+	if err := ug.db.Where(user).First(&user).Error; err != nil {
 		return err
 	}
 	return nil
@@ -266,8 +319,8 @@ func (us *UserService) getUser(user *User) error {
 	IsExistingUser checks if user exists
 	returns error if user does not exist
 */
-func (us *UserService) isExistingUser(user User) error {
-	if err := us.db.Where(user).First(&user).Error; err != nil {
+func (ug *userGorm) isExistingUser(user User) error {
+	if err := ug.db.Where(user).First(&user).Error; err != nil {
 		switch err {
 			case gorm.ErrRecordNotFound:
 				return ErrNotFound
@@ -282,7 +335,7 @@ func (us *UserService) isExistingUser(user User) error {
 	hashPassword hashes the provided password
 	returns error if unable to hash password
 */
-func (us *UserService) hashPassword(user *User) error {
+func (ug *userGorm) hashPassword(user *User) error {
 	passwordByte := []byte(user.Password + passwordPepper)
 	passwordHash, err := bcrypt.GenerateFromPassword(passwordByte, bcrypt.DefaultCost)
 	if err != nil {
@@ -290,5 +343,23 @@ func (us *UserService) hashPassword(user *User) error {
 	}
 	user.Password = ""
 	user.PasswordHash = string(passwordHash)
+	return nil
+}
+
+/*
+	verifyHashedPassword verifies the provided password against the hashed password
+	returns error if unable to verify password
+*/
+func (ug *userGorm) verifyHashedPassword(password, passwordHash string) error {
+	passwordByte := []byte(password + passwordPepper)
+	password = ""
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), passwordByte); err != nil {
+		switch err {
+			case bcrypt.ErrMismatchedHashAndPassword:
+				return ErrInvalidCredentials
+			default:
+				return err
+		}
+	}
 	return nil
 }
