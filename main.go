@@ -31,9 +31,9 @@ func main() {
 	router.HandleFunc("/users/{user_id}", controllers.DeleteUserById).Methods(http.MethodDelete)
 
 
-	router.HandleFunc("/categories/new", controllers.CreateNewCategory).Methods(http.MethodPost)
-	router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodGet)
-	router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodGet)
+	// router.HandleFunc("/categories/new", controllers.CreateNewCategory).Methods(http.MethodPost)
+	// router.HandleFunc("/categories", controllers.GetAllCategories).Methods(http.MethodGet)
+	// router.HandleFunc("/categories/{category_id}", controllers.GetCategoryById).Methods(http.MethodGet)
 
 	// // POST "/products/new"
 	// // Create new category
