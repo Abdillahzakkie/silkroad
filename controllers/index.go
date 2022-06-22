@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	us *models.UserService
-	cs *models.CategoryService
+	us models.UserService
 )
 
 func init() {
@@ -25,13 +24,8 @@ func init() {
 		log.Fatal(models.ErrDatabaseConnectionFailed.Error())
 	}
 
-	cs, err = models.NewCategoryService(psqlInfo); if err != nil {
-		log.Fatal(models.ErrDatabaseConnectionFailed.Error())
-	}
-
 	// clear all tables
 	us.DestructiveReset()
-	cs.DestructiveReset()
 }
 
 func ParseForm(r *http.Request, dst interface{}) error {
