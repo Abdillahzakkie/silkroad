@@ -11,8 +11,8 @@ func errorResponse(values ...interface{}) string {
 	return fmt.Sprintf("Expected %s, got %s", values[0], values[1])
 }
 
-func getUser() *User {
-	return &User{
+func getUser() User {
+	return User{
 		Username: "silkroad",
 		Wallet: "0x0000000000000000000000000000000000000000",
 		Email: "example@example.com",
@@ -20,7 +20,7 @@ func getUser() *User {
 	}
 }
 
-func testingUserService() (*UserService, error) {
+func testingUserService() (UserService, error) {
 	psqlInfo, err := GetPsqlInfo("silkroad_test"); if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func testingUserService() (*UserService, error) {
 	return us, nil
 }
 
-func createNewUser(us *UserService, user *User) error {
+func createNewUser(us UserService, user *User) error {
 	err := us.CreateNewUser(user); if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func TestHashPassword(t *testing.T) {
 	user := getUser()
 	password := user.Password
 
-	if err := us.HashPassword(user); err != nil {
+	if err := us.hashPassword(&user); err != nil {
 		t.Error(err)
 	}
 	// assert user.Password is cleared
@@ -75,12 +75,12 @@ func TestVerifyHashedPassword(t *testing.T) {
 	user := getUser()
 	password := user.Password
 
-	if err := us.HashPassword(user); err != nil {
+	if err := us.hashPassword(&user); err != nil {
 		t.Error(err)
 	}
 
 	// assert that user.PasswordHash is hashed correctly
-	if err := us.VerifyHashedPassword(password, user.PasswordHash); err != nil {
+	if err := us.verifyHashedPassword(password, user.PasswordHash); err != nil {
 		t.Error(err)
 	}
 }
@@ -94,7 +94,7 @@ func TestCreateUser(t *testing.T) {
 
 	// create new user
 	user := getUser()
-	if err := createNewUser(us, user); err != nil {
+	if err := createNewUser(us, &user); err != nil {
 		t.Error(err)
 	}
 	// assert that user.ID is 1
@@ -127,7 +127,8 @@ func TestGetAllUsers(t *testing.T) {
 	defer us.Close()
 	
 	// create new user
-	if err := createNewUser(us, getUser()); err != nil {
+	user := getUser()
+	if err := createNewUser(us, &user); err != nil {
 		t.Errorf(err.Error())
 	}
 
@@ -148,12 +149,7 @@ func TestDeleteUserById(t *testing.T) {
 	defer us.Close()
 
 	// create new user
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@test.com",
-		Password: "test",
-	}
+	user := getUser()
 
 	if err := us.CreateNewUser(&user); err != nil {
 		t.Errorf(err.Error())
@@ -197,7 +193,7 @@ func TestGetUserByRememberHash(t *testing.T) {
 	defer us.Close()
 
 	user := getUser()
-	if err := us.CreateNewUser(user); err != nil {
+	if err := us.CreateNewUser(&user); err != nil {
 		t.Errorf(err.Error())
 	}
 	// get user by Remember Token
@@ -216,24 +212,19 @@ func TestIsExistingUser(t *testing.T) {
 	}
 	// close database connection
 	defer us.Close()
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@test.com",
-		Password: "test",
-	}
+	user := getUser()
 	// create new user
 	if err := us.CreateNewUser(&user); err != nil {
 		t.Errorf(err.Error())
 	}
 
 	// should pass since user has already been created above
-	if err := us.IsExistingUser(user); err != nil {
+	if err := us.isExistingUser(user); err != nil {
 		t.Error(err)
 	}
 
 	// should return err for arbitrary user ID
-	if err := us.IsExistingUser(User{ID: 1000}); !errors.Is(err, ErrNotFound) {
+	if err := us.isExistingUser(User{ID: 1000}); !errors.Is(err, ErrNotFound) {
 		t.Errorf(errorResponse(ErrNotFound.Error(), err.Error()))
 	}
 }
@@ -246,12 +237,7 @@ func TestAuthenticate(t *testing.T) {
 	defer us.Close()
 
 	// create new user
-	user := User{
-		Username: "silkroad",
-		Wallet: "0x0000000000000000000000000000000000000000",
-		Email: "example@example.com",
-		Password: "test",
-	}
+	user := getUser()
 	password := user.Password
 	if err := createNewUser(us, &user); err != nil {
 		t.Error(err)
