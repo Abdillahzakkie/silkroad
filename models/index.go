@@ -18,15 +18,19 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("models: resource not found")
-	ErrAlreadyExists = errors.New("models: resource already exists")
-	ErrBadRequest = errors.New("models: invalid credentials provided")
+	// ErrInternalServerError is returned for internal server errors
 	ErrInternalServerError = errors.New("models: internal server error")
-	ErrDatabaseConnectionFailed = errors.New("database connection failed")
-	
-	// BCRYPT ERRORS
-	ErrPasswordTooShort = errors.New("models: password is too short")
+	// ErrNotFound is returned when a resources cannot be found in the database
+	ErrNotFound = errors.New("models: resource not found")
+	// ErrAlreadyExists is returned when a resources already existed in the database
+	ErrAlreadyExists = errors.New("models: resource already exists")
+	// ErrInvalidCredentials is returned is credentials are invalid
 	ErrInvalidCredentials = errors.New("models: invalid credentials provided")
+	// ErrDatabaseConnectionFailed is returned if database connection cannot be established
+	ErrDatabaseConnectionFailed = errors.New("database connection failed")
+	// ErrPasswordTooShort is returned if password length is too short
+	ErrPasswordTooShort = errors.New("models: password is too short")
+	
 )
 
 type Model struct {
@@ -45,7 +49,7 @@ type User struct {
 	Email    			string 		`gorm:"not null;uniqueIndex" json:"-"`
 	Password 			string 		`gorm:"-:all" json:"-"`
 	PasswordHash 		string 		`gorm:"not null;column:password" json:"-"`
-	Product 			[]Product 	`gorm:"foreignkey:user_id" json:"products"`
+	// Product 			[]Product 	`gorm:"foreignkey:user_id" json:"products"`
 }
 
 type Category struct {
